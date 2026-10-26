@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SmsOpener — Development SMS Inbox (<%= @messages.size %>)</title>
+  <style>
+    :root {
+      --bg: #0b1120;
+      --sidebar-bg: #0f172a;
+      --card-bg: #1e293b;
+      --border: #1e293b;
+      --border-light: #334155;
+      --text: #f8fafc;
+      --muted: #94a3b8;
+      --accent: #38bdf8;
+      --primary: #2563eb;
+      --danger: #ef4444;
+      --success: #10b981;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    /* Top Navbar */
+    .navbar {
+      height: 58px;
+      background: var(--sidebar-bg);
+      border-bottom: 1px solid var(--border-light);
+      padding: 0 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-shrink: 0;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 700;
+      font-size: 16px;
+      color: var(--text);
+      text-decoration: none;
+    }
+    .brand-icon {
+      width: 30px;
+      height: 30px;
+      border-radius: 8px;
+      background: linear-gradient(135deg, #2563eb, #38bdf8);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      font-weight: 800;
+      color: #fff;
+    }
+    .count-pill {
+      background: rgba(56, 189, 248, 0.16);
+      color: var(--accent);
+      font-size: 12px;
+      padding: 2px 9px;
+      border-radius: 999px;
+      font-weight: 600;
+    }
+    .nav-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 7px 13px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      border: 1px solid var(--border-light);
+      background: var(--card-bg);
+      color: var(--text);
+      cursor: pointer;
+      text-decoration: none;
+      transition: all 0.15s ease;
+    }
+    .btn:hover { border-color: var(--accent); }
+    .btn-primary {
+      background: var(--primary);
+      border-color: var(--primary);
+      color: #fff;
+    }
+    .btn-primary:hover { opacity: 0.92; border-color: var(--accent); }
+    .btn-danger {
+      background: rgba(239, 68, 68, 0.12);
+      border-color: rgba(239, 68, 68, 0.35);
+      color: #fca5a5;
+    }
+    .btn-danger:hover {
+      background: rgba(239, 68, 68, 0.22);
+      border-color: var(--danger);
+    }
+    /* Main Workspace */
+    .workspace {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 360px 1fr;
+      min-height: 0;
+    }
+    .sidebar {
+      background: var(--sidebar-bg);
+      border-right: 1px solid var(--border-light);
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+    }
+    .search-box {
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--border-light);
+    }
+    .search-input {
+      width: 100%;
+      padding: 8px 12px;
+      border-radius: 8px;
+      border: 1px solid var(--border-light);
+      background: #0b1120;
+      color: var(--text);
+      font-size: 13px;
+      outline: none;
+    }
+    .search-input:focus { border-color: var(--accent); }
+    .message-list {
+      flex: 1;
+      overflow-y: auto;
+      list-style: none;
+      margin: 0;
+      padding: 0;
+    }
+    .message-item {
+      display: block;
+      padding: 14px 16px;
+      border-bottom: 1px solid rgba(51, 65, 85, 0.5);
+      text-decoration: none;
+      color: inherit;
+      transition: background 0.12s;
+    }
+    .message-item:hover {
+      background: rgba(30, 41, 59, 0.6);
+    }
+    .message-item.active {
+      background: rgba(37, 99, 235, 0.18);
+      border-left: 3px solid var(--accent);
+    }
+    .item-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 4px;
+    }
+    .item-to {
+      font-weight: 600;
+      font-size: 13.5px;
+      color: var(--text);
+    }
+    .item-time {
+      font-size: 11px;
+      color: var(--muted);
+    }
+    .item-body {
+      font-size: 13px;
+      color: #cbd5e1;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      margin-bottom: 8px;
+    }
+    .item-tags {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+    .tag {
+      font-size: 10.5px;
+      font-weight: 600;
+      padding: 2px 7px;
+      border-radius: 6px;
+      background: rgba(148, 163, 184, 0.14);
+      color: var(--muted);
+      text-transform: uppercase;
+    }
+    .tag-otp {
+      background: rgba(16, 185, 129, 0.18);
+      color: #34d399;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+    /* Detail Pane */
+    .detail-pane {
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+      background: var(--bg);
+    }
+    .detail-toolbar {
+      padding: 12px 20px;
+      background: rgba(15, 23, 42, 0.75);
+      border-bottom: 1px solid var(--border-light);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .detail-frame {
+      flex: 1;
+      width: 100%;
+      border: none;
+      background: var(--bg);
+    }
+    .empty-state {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 40px;
+      text-align: center;
+      color: var(--muted);
+    }
+    .empty-state h2 {
+      color: var(--text);
+      margin: 12px 0 6px;
+      font-size: 18px;
+    }
+    .empty-state p {
+      max-width: 420px;
+      font-size: 14px;
+      line-height: 1.5;
+      margin: 0 0 20px;
+    }
+    /* Modal */
+    .modal-backdrop {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.65);
+      align-items: center;
+      justify-content: center;
+      z-index: 50;
+    }
+    .modal-backdrop.open { display: flex; }
+    .modal {
+      background: var(--sidebar-bg);
+      border: 1px solid var(--border-light);
+      border-radius: 14px;
+      width: 100%;
+      max-width: 460px;
+      padding: 22px;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+    }
+    .modal h3 { margin: 0 0 14px; font-size: 16px; }
+    .form-group { margin-bottom: 14px; }
+    .form-group label {
+      display: block;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--muted);
+      margin-bottom: 5px;
+    }
+    .form-control {
+      width: 100%;
+      padding: 9px 12px;
+      border-radius: 8px;
+      border: 1px solid var(--border-light);
+      background: #0b1120;
+      color: var(--text);
+      font-size: 13.5px;
+      font-family: inherit;
+    }
+    .preset-bar {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 14px;
+      flex-wrap: wrap;
+    }
+    .preset-btn {
+      font-size: 11px;
+      padding: 4px 8px;
+      border-radius: 6px;
+      border: 1px solid var(--border-light);
+      background: var(--card-bg);
+      color: var(--accent);
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <header class="navbar">
+    <a href="<%= root_path %>" class="brand">
+      <span class="brand-icon">SMS</span>
+      <span>SmsOpener</span>
+      <span class="count-pill"><%= @messages.size %></span>
+    </a>
+    <div class="nav-actions">
+      <button type="button" class="btn btn-primary" onclick="document.getElementById('test-sms-modal').classList.add('open')">
+        + Send Test SMS
+      </button>
+      <a href="<%= root_path %>" class="btn">Refresh</a>
+      <% unless @messages.empty? -%>
+        <form action="<%= clear_messages_path %>" method="post" style="margin:0;" onsubmit="return confirm('Clear all captured SMS messages?');">
+          <button type="submit" class="btn btn-danger">Clear All</button>
+        </form>
+      <% end -%>
+    </div>
+  </header>
+
+  <% if @messages.empty? -%>
+    <div class="empty-state">
+      <div class="brand-icon" style="width:48px;height:48px;font-size:18px;border-radius:14px;">SMS</div>
+      <h2>No SMS messages captured yet</h2>
+      <p>
+        Any SMS sent via <code>Twilio::REST::Client</code> or <code>SmsOpener.deliver</code> in development will appear here automatically.
+      </p>
+      <button type="button" class="btn btn-primary" onclick="document.getElementById('test-sms-modal').classList.add('open')">
+        Send a Sample 2FA Text
+      </button>
+    </div>
+  <% else -%>
+    <div class="workspace">
+      <aside class="sidebar">
+        <div class="search-box">
+          <input type="text" id="sms-search" class="search-input" placeholder="Filter by phone, body, or OTP..." oninput="filterMessages(this.value)">
+        </div>
+        <div class="message-list" id="message-list">
+          <% @messages.each do |msg| -%>
+            <% is_active = @selected_message && @selected_message.id == msg.id -%>
+            <a href="<%= root_path(id: msg.id) %>"
+               class="message-item <%= 'active' if is_active %>"
+               data-search="<%= CGI.escapeHTML("#{msg.to_display} #{msg.from} #{msg.body} #{msg.otp_code}".downcase) %>">
+              <div class="item-top">
+                <span class="item-to"><%= CGI.escapeHTML(msg.to_display) %></span>
+                <span class="item-time"><%= msg.created_at.strftime("%H:%M:%S") %></span>
+              </div>
+              <div class="item-body"><%= CGI.escapeHTML(msg.body) %></div>
+              <div class="item-tags">
+                <span class="tag"><%= CGI.escapeHTML(msg.provider) %></span>
+                <span class="tag"><%= msg.segments %> seg</span>
+                <% if msg.otp_code -%>
+                  <span class="tag tag-otp">OTP: <%= CGI.escapeHTML(msg.otp_code) %></span>
+                <% end -%>
+              </div>
+            </a>
+          <% end -%>
+        </div>
+      </aside>
+
+      <main class="detail-pane">
+        <% if @selected_message -%>
+          <div class="detail-toolbar">
+            <div>
+              <strong>To:</strong> <%= CGI.escapeHTML(@selected_message.to_display) %>
+              <span style="color:var(--muted); margin: 0 8px;">|</span>
+              <strong>From:</strong> <%= CGI.escapeHTML(@selected_message.from) %>
+            </div>
+            <div style="display:flex; gap:8px; align-items:center;">
+              <% if @selected_message.otp_code -%>
+                <button type="button" class="btn" style="border-color:#10b981;color:#34d399;"
+                        onclick="navigator.clipboard.writeText('<%= CGI.escapeHTML(@selected_message.otp_code) %>'); this.textContent='Copied <%= CGI.escapeHTML(@selected_message.otp_code) %>!';">
+                  Copy OTP (<%= CGI.escapeHTML(@selected_message.otp_code) %>)
+                </button>
+              <% end -%>
+              <a href="<%= message_path(@selected_message.id) %>" target="_blank" class="btn">Open Standalone</a>
+              <form action="<%= delete_message_path(@selected_message.id) %>" method="post" style="margin:0;">
+                <button type="submit" class="btn btn-danger">Delete</button>
+              </form>
+            </div>
+          </div>
+          <iframe class="detail-frame" src="<%= message_path(@selected_message.id) %>" title="SMS Preview"></iframe>
+        <% end -%>
+      </main>
+    </div>
+  <% end -%>
+
+  <!-- Send Test SMS Modal -->
+  <div class="modal-backdrop" id="test-sms-modal" onclick="if(event.target===this)this.classList.remove('open')">
+    <div class="modal">
+      <h3>Send Test SMS</h3>
+      <div class="preset-bar">
+        <button type="button" class="preset-btn" onclick="fillPreset('Your verification code is 849201. Valid for 10 minutes.')">2FA OTP Preset</button>
+        <button type="button" class="preset-btn" onclick="fillPreset('Sign in to your account: https://localhost:3000/session/magic?token=xyz987')">Magic Link Preset</button>
+        <button type="button" class="preset-btn" onclick="fillPreset('Your order #4821 has shipped! 📦 Track at https://localhost:3000/orders/4821')">Unicode MMS/Emoji</button>
+      </div>
+      <form action="<%= messages_path %>" method="post">
+        <div class="form-group">
+          <label for="sms-to">To Phone Number</label>
+          <input type="text" id="sms-to" name="to" class="form-control" value="+15558675309" required>
+        </div>
+        <div class="form-group">
+          <label for="sms-from">From Phone Number / Sender ID</label>
+          <input type="text" id="sms-from" name="from" class="form-control" value="<%= CGI.escapeHTML(SmsOpener.configuration.default_from) %>">
+        </div>
+        <div class="form-group">
+          <label for="sms-body-input">Message Body</label>
+          <textarea id="sms-body-input" name="body" rows="4" class="form-control" required>Your verification code is 849201. Valid for 10 minutes.</textarea>
+        </div>
+        <div style="display:flex; justify-content:flex-end; gap:8px;">
+          <button type="button" class="btn" onclick="document.getElementById('test-sms-modal').classList.remove('open')">Cancel</button>
+          <button type="submit" class="btn btn-primary">Deliver SMS</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    function filterMessages(query) {
+      var normalized = (query || "").toLowerCase().trim();
+      var items = document.querySelectorAll("#message-list .message-item");
+      items.forEach(function(item) {
+        var text = item.getAttribute("data-search") || "";
+        item.style.display = (!normalized || text.indexOf(normalized) !== -1) ? "block" : "none";
+      });
+    }
+    function fillPreset(bodyText) {
+      document.getElementById("sms-body-input").value = bodyText;
+    }
+  </script>
+</body>
+</html>

@@ -12,9 +12,12 @@ Gem::Specification.new do |spec|
   spec.description   = "Inspired by letter_opener and letter_opener_web, sms_opener intercepts outgoing SMS/MMS messages " \
                        "(including Twilio and custom SMS adapters) in development, opens a mobile preview in your browser " \
                        "via Launchy, and provides a mountable Rails Engine web inbox."
-  spec.homepage      = "https://github.com/stubblsc/sms_opener"
+  spec.homepage      = "https://github.com/decodery-ai/sms_opener"
   spec.license       = "MIT"
   spec.required_ruby_version = ">= 3.0.0"
+
+  spec.metadata["homepage_uri"] = spec.homepage
+  spec.metadata["source_code_uri"] = "https://github.com/decodery-ai/sms_opener"
 
   spec.files = Dir.chdir(__dir__) do
     Dir["{app,config,lib}/**/*", "LICENSE.txt", "README.md", "Rakefile"]

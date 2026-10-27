@@ -28,7 +28,7 @@ jobs:
         run: gem build sms_opener.gemspec
 
       - name: Configure RubyGems OIDC Trusted Publishing
-        uses: rubygems/configure-rubygems-credentials@v1
+        uses: rubygems/configure-rubygems-credentials@v2.1.0
 
       - name: Push gem to RubyGems.org
         run: gem push sms_opener-*.gem

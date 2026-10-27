@@ -27,16 +27,8 @@ jobs:
       - name: Build gem
         run: gem build sms_opener.gemspec
 
-      - name: Configure RubyGems OIDC Trusted Publishing (when no API key secret is set)
-        if: ${{ secrets.RUBYGEMS_API_KEY == '' }}
+      - name: Configure RubyGems OIDC Trusted Publishing
         uses: rubygems/configure-rubygems-credentials@v1
 
       - name: Push gem to RubyGems.org
-        env:
-          GEM_HOST_API_KEY: ${{ secrets.RUBYGEMS_API_KEY }}
-        run: |
-          if [ -n "$GEM_HOST_API_KEY" ]; then
-            GEM_HOST_API_KEY="$GEM_HOST_API_KEY" gem push sms_opener-*.gem
-          else
-            gem push sms_opener-*.gem
-          fi
+        run: gem push sms_opener-*.gem
